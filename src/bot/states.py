@@ -1,6 +1,7 @@
 """States
 """
 from dataclasses import dataclass
+from pathlib import Path
 from typing import List, Optional
 
 from aiogram.dispatcher.filters.state import StatesGroup, State
@@ -29,6 +30,12 @@ class Question:
     answers: List[str]
     correct_answer: List[str]
     options: Optional[Options] = Options()
+
+
+@dataclass
+class Theory:
+    button_text: str
+    file_path: str
 
 
 questions = dict(
@@ -83,7 +90,20 @@ questions = dict(
         answers=['1', '2', '3', '4'],
         correct_answer=['3'],
         options=Options(
-            image_path="C:\\Users\\Nikita\\Projects\\parasites_quiz\\src"
-                       "\\bot\\q_10.jpg")  # fixme
+            image_path=Path("./assets/q_10.jpg"))
     ),
+)
+
+
+theory_materials = dict(
+    theory_1=Theory(button_text="Дизентерийная амеба",
+                    file_path=Path("./assets/theory_1.pdf")),
+    theory_2=Theory(button_text="Лямблия кишечная",
+                    file_path=Path("./assets/theory_2.pdf")),
+    theory_3=Theory(button_text="Род Лейшмания",
+                    file_path=Path("./assets/theory_3.pdf")),
+    theory_4=Theory(button_text="Род Трипаносома",
+                    file_path=Path("./assets/theory_4.pdf")),
+    theory_5=Theory(button_text="Малярийный плазмодий",
+                    file_path=Path("./assets/theory_5.pdf")),
 )

@@ -5,11 +5,12 @@ import logging
 from aiogram import types
 from aiogram.dispatcher import filters, FSMContext
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, \
-    InputFile
+    InputFile, InlineKeyboardMarkup, InlineKeyboardButton
+
 
 from src.bot import utils
 from src.bot.dependencies import dp, config, bot
-from src.bot.states import QuizFlow, questions
+from src.bot.states import QuizFlow, questions, theory_materials
 
 logger = logging.getLogger(__name__)
 
@@ -66,6 +67,14 @@ async def show_results(message: types.Message):
 async def show_theory_menu(message: types.Message):
     """Menu for choosing theory topic
     """
+    inline_keyboard = InlineKeyboardMarkup()
+    text = "По какой теме хотите освежить свои знания? 🤓"
+    for _index, theory_material in theory_materials.items():
+        inline_keyboard.add(InlineKeyboardButton(
+            text=theory_material.button_text,
+            callback_data=f"show_theory|{_index}"
+        ))
+    await message.answer(text=text, reply_markup=inline_keyboard)
 
 
 @dp.message_handler(filters.Text(equals=QUIZ_BUTTON.text))
@@ -176,6 +185,19 @@ async def next_question(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(text=text,
                                   reply_markup=inline_keyboard,
                                   parse_mode="HTML")
+
+
+@dp.callback_query_handler(filters.Text(startswith="show_theory"))
+async def show_theory(callback: types.CallbackQuery):
+    """Send user a pdf file with requested theory
+    """
+    await callback.answer()
+    _index = callback.data.split('|')[1]
+    theory_material = theory_materials.get(_index)
+    await callback.message.answer_document(
+        InputFile(theory_material.file_path),
+        caption=f"{theory_material.button_text}"
+    )
 
 
 @dp.errors_handler()
