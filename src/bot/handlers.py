@@ -8,7 +8,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, \
     InputFile
 
 from src.bot import utils
-from src.bot.dependencies import dp, config
+from src.bot.dependencies import dp, config, bot
 from src.bot.states import QuizFlow, questions
 
 logger = logging.getLogger(__name__)
@@ -16,21 +16,34 @@ logger = logging.getLogger(__name__)
 QUIZ_BUTTON = KeyboardButton(text="Квиз")
 RESULTS_BUTTON = KeyboardButton(text="Результаты")
 THEORY_BUTTON = KeyboardButton(text="Справочник")
+HELP_BUTTON = KeyboardButton(text="Помощь")
 
+MAIN_MENU = ReplyKeyboardMarkup(resize_keyboard=True,
+                                one_time_keyboard=False,
+                                row_width=2)
+MAIN_MENU.add(QUIZ_BUTTON, RESULTS_BUTTON, THEORY_BUTTON, HELP_BUTTON)
 
-# todo add cancel command handler
-# todo add logging
 
 @dp.message_handler(commands='start')
 async def cmd_start(message: types.Message):
     """Main menu
     """
-    keyboard = ReplyKeyboardMarkup(resize_keyboard=True,
-                                   one_time_keyboard=False,
-                                   row_width=1)
-    keyboard.add(QUIZ_BUTTON, RESULTS_BUTTON, THEORY_BUTTON)
+    await message.answer("Проверь свои знания!", reply_markup=MAIN_MENU)
 
-    await message.answer("Проверь свои знания!", reply_markup=keyboard)
+
+@dp.message_handler((filters.Text(equals=HELP_BUTTON.text)))
+async def show_help(message: types.Message):
+    """Show help message
+    """
+    text = "<b>Помощь по командам бота</b>:\n" \
+           "/start - вызвать главное меню\n" \
+           "/quiz или кнопка 'Квиз' в меню - начать прохождение викторины\n" \
+           "<b>Примечание</b>: когда вы выполняете квиз, " \
+           "остальные команды становятся недоступны " \
+           "до завершения прохождения. " \
+           "Чтобы выйти из режима квиза, не пройдя его до конца, " \
+           "используйте команду <b>/cancel</b>"
+    await message.answer(text, parse_mode="HTML")
 
 
 @dp.message_handler(filters.Text(equals=RESULTS_BUTTON.text))
@@ -50,20 +63,13 @@ async def show_results(message: types.Message):
 
 
 @dp.message_handler(filters.Text(equals=THEORY_BUTTON.text))
-async def show_theory(message: types.Message):
+async def show_theory_menu(message: types.Message):
     """Menu for choosing theory topic
     """
-    # keyboard = ReplyKeyboardMarkup(resize_keyboard=True,
-    #                                one_time_keyboard=True,
-    #                                row_width=1)
-    # keyboard.add(, )
-    file = open(
-        "C:\\Users\\Nikita\\Projects\\parasites_quiz\\src\\bot\\theory_1.pdf",
-        "rb")
-    await message.answer_document(file)
 
 
 @dp.message_handler(filters.Text(equals=QUIZ_BUTTON.text))
+@dp.message_handler(commands='quiz')
 async def start_quiz(message: types.Message):
     """Entry point into quiz
     """
@@ -77,6 +83,24 @@ async def start_quiz(message: types.Message):
                                                          question_index="q_1"),
                          reply_markup=inline_keyboard,
                          parse_mode="HTML")
+
+
+@dp.message_handler(commands='cancel', state="*")
+async def cancel_quiz(message: types.Message, state: FSMContext):
+    """Exit quiz mode
+    """
+    current_state = await state.get_state()
+    if current_state is None:
+        return
+
+    logging.info('Cancelling state %r', current_state)
+    # Cancel state and inform user about it
+    await state.finish()
+    await message.reply(
+        'Выход из режима квиза. Сожалеем, что вы не завершили прохождение, '
+        'но всегда можно сделать это позднее! 😉',
+        reply_markup=MAIN_MENU
+    )
 
 
 @dp.callback_query_handler(filters.Text(startswith="a|"), state="*")
@@ -131,7 +155,6 @@ async def next_question(callback: types.CallbackQuery, state: FSMContext):
 
             results['results'][user_id] = user_answers
             results['total'][user_id] = utils.count_score(user_answers)
-            print(results)
             utils.save_results(config, results)
 
             result_text = utils.format_results_text(user_answers)
@@ -153,3 +176,11 @@ async def next_question(callback: types.CallbackQuery, state: FSMContext):
     await callback.message.answer(text=text,
                                   reply_markup=inline_keyboard,
                                   parse_mode="HTML")
+
+
+@dp.errors_handler()
+async def log_errors(update: types.Update, error):
+    """send errors to tg control chat
+    """
+    msg = f"Error happened: {error}"
+    await bot.send_message(chat_id=config.control_chat_id, text=msg)
