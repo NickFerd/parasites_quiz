@@ -19,14 +19,26 @@ class ResultsUnavailable(Exception):
     """
 
 
+def is_correct(answer: List[str], question: Question) -> bool:
+    """Determine whether the answer is correct for provided question
+    """
+    check_for_order = question.options.check_answer_order
+    if check_for_order:
+        # order is important
+        return answer == question.correct_answer
+
+    # order not important
+    return set(answer) == set(question.correct_answer)
+
+
 def count_score(user_answers: dict) -> int:
     """Count how many correct answers user gave.
     Returns integer of correct answers
     """
     count = 0
     for question_number, answer in user_answers.items():
-        correct_answer = questions.get(question_number).correct_answer
-        if answer == correct_answer:
+        question = questions.get(question_number)
+        if is_correct(answer, question):
             count += 1
     return count
 
@@ -111,8 +123,8 @@ def format_results_text(user_answers: dict, include_header: bool = True):
     details = "<i>Подробности</i>:\n"
     for _index, question in questions.items():
         q_number = number_from_index(_index)
-        correct = user_answers.get(_index) == question.correct_answer
-        emoji = "✅" if correct else "❌"
+        user_answer = user_answers.get(_index, [])
+        emoji = "✅" if is_correct(user_answer, question) else "❌"
         details += f"Вопрос {q_number} - {emoji}\n"
 
     if include_header:
