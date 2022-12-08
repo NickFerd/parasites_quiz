@@ -6,6 +6,8 @@ from typing import List, Optional
 
 from aiogram.dispatcher.filters.state import StatesGroup, State
 
+from src.bot.dependencies import config
+
 
 class QuizFlow(StatesGroup):
     """Flow of questions in quiz
@@ -20,8 +22,7 @@ class QuizFlow(StatesGroup):
 @dataclass
 class Options:
     image_path: Optional[str] = None  # Send image as well as question
-    repeat_answers: Optional[
-        bool] = None  # repeat available answers in message
+    repeat_answers: Optional[bool] = None  # repeat available answers in text
 
 
 @dataclass
@@ -84,26 +85,26 @@ questions = dict(
         ],
         correct_answer=['2) двукрылые']),
     q_10=Question(
-        text="Все представленные на рисунке организмы кроме одного "
+        text="Все представленные на рисунке организмы, кроме одного, "
              "являются паразитами. Определите под каким номером "
              "свободноживущий организм",
         answers=['1', '2', '3', '4'],
         correct_answer=['3'],
         options=Options(
-            image_path=Path("./assets/q_10.jpg"))
+            image_path=config.assets_path/Path("q_10.jpg"))
     ),
 )
 
 
 theory_materials = dict(
     theory_1=Theory(button_text="Дизентерийная амеба",
-                    file_path=Path("./assets/theory_1.pdf")),
+                    file_path=config.assets_path/Path("theory_1.pdf")),
     theory_2=Theory(button_text="Лямблия кишечная",
-                    file_path=Path("./assets/theory_2.pdf")),
+                    file_path=config.assets_path/Path("theory_2.pdf")),
     theory_3=Theory(button_text="Род Лейшмания",
-                    file_path=Path("./assets/theory_3.pdf")),
+                    file_path=config.assets_path/Path("theory_3.pdf")),
     theory_4=Theory(button_text="Род Трипаносома",
-                    file_path=Path("./assets/theory_4.pdf")),
+                    file_path=config.assets_path/Path("theory_4.pdf")),
     theory_5=Theory(button_text="Малярийный плазмодий",
-                    file_path=Path("./assets/theory_5.pdf")),
+                    file_path=config.assets_path/Path("theory_5.pdf")),
 )

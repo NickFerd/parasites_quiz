@@ -3,6 +3,7 @@
 import json
 import logging
 from json import JSONDecodeError
+from pathlib import Path
 from typing import List, Optional
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -34,7 +35,7 @@ def read_results(config: Config) -> dict:
     """Read from json file results
     """
     try:
-        with open(config.results_path, "r", encoding="utf-8") as file:
+        with open(config.logs_path/Path("results.json"), "r", encoding="utf-8") as file:
             results = json.load(file)
     except (FileNotFoundError, JSONDecodeError) as err:
         logger.error(f"Error reading results: {err}")
@@ -46,7 +47,8 @@ def save_results(config: Config, results: dict) -> None:
     """Save new version of results
     """
     try:
-        with open(config.results_path, 'w', encoding='utf-8') as file:
+        with open(config.logs_path/Path("results.json"), 'w',
+                  encoding='utf-8') as file:
             json.dump(results, file, ensure_ascii=False, indent=4)
     except (FileNotFoundError, JSONDecodeError) as err:
         logger.error(f"Error saving results: {err}")
@@ -122,11 +124,14 @@ def format_all_users_stats(results: dict) -> str:
     """Count stats for all users and format in html friendly way"""
     totals = results["total"]
     total_participants = len(totals)
+    if total_participants == 0:
+        return "\nОго! Еще никто не принимал участия в квизе, " \
+               "у вас есть возможность стать первым!"
     average_mark = sum(totals.values()) / total_participants
 
     header = "\n<i>Статистика:</i>\n"
     stats = f"Всего участников квиза - {total_participants}\n" \
-            f"Среднее количество правильных ответов - {average_mark}"
+            f"Среднее количество правильных ответов - {average_mark:.2f}"
     return header + stats
 
 

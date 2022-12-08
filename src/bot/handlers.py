@@ -32,7 +32,7 @@ async def cmd_start(message: types.Message):
     await message.answer("Проверь свои знания!", reply_markup=MAIN_MENU)
 
 
-@dp.message_handler((filters.Text(equals=HELP_BUTTON.text)))
+@dp.message_handler((filters.Text(equals=HELP_BUTTON.text)), state="*")
 async def show_help(message: types.Message):
     """Show help message
     """
@@ -40,14 +40,14 @@ async def show_help(message: types.Message):
            "/start - вызвать главное меню\n" \
            "/quiz или кнопка 'Квиз' в меню - начать прохождение викторины\n" \
            "<b>Примечание</b>: когда вы выполняете квиз, " \
-           "остальные команды становятся недоступны " \
+           "команды 'Квиз' и 'Справочник' становятся недоступны " \
            "до завершения прохождения. " \
            "Чтобы выйти из режима квиза, не пройдя его до конца, " \
            "используйте команду <b>/cancel</b>"
     await message.answer(text, parse_mode="HTML")
 
 
-@dp.message_handler(filters.Text(equals=RESULTS_BUTTON.text))
+@dp.message_handler(filters.Text(equals=RESULTS_BUTTON.text), state="*")
 async def show_results(message: types.Message):
     """Show results
     """
